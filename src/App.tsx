@@ -62,7 +62,7 @@ function App() {
     {status && <Alert onClose={() => { setColor("primary"); setStatus(!status)}}>Hello <span>Alert!!</span></Alert>}
     <Like onClick={() => { setStatus(!status);  console.log('like clicked') }} />
     <Button color={color} onClick={() => {setStatus(!status); setColor('danger');} } >My Button</Button> */}
-    {/* ====E1.1==== */}
+    {/* ====E1. =1==== */}
 
     {/* E1.3 : Form  */}
     <Form />

@@ -1,8 +1,20 @@
 import { FormEvent, useRef, useState } from "react";
 import { useForm, FieldValues } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const schema = z.object({
+    name: z.string().min(3),
+    age: z.number({ invalid_type_error: 'Age is required!' }).min(18, { message: 'Age must be atleast 18!' }).max(50)
+});
+
+type FormData = z.infer<typeof schema>
 
 const Form = () => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const { register,
+        handleSubmit,
+        formState: { errors, isValid } }
+        = useForm<FormData>({ resolver: zodResolver(schema) });
 
     const onSubmit = (data: FieldValues) => {
         console.log(data)
@@ -13,20 +25,17 @@ const Form = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="mb-3">
                 <label htmlFor="name" className="form-label">Name</label>
-                <input {...register('name', { required: true, minLength: 3 })}
+                <input {...register('name')}
                     type="text" className="form-control" />
-                {errors.name?.type === 'required' && <p>Name is required</p>}
-                {errors.name?.type === 'minLength' && <p>Name should be of min length 3!</p>}
+                {errors.name && <p className="text-danger">{errors.name.message}</p>}
             </div>
             <div className="mb-3">
                 <label htmlFor="age" className="form-label">Age</label>
-                <input {...register('age', { required: true, min: 18, max: 80 })}
+                <input {...register('age', { valueAsNumber: true })}
                     type="number" className="form-control" />
-                {errors.age?.type === 'required' && <p>Age is required</p>}
-                {errors.age?.type === 'min' && <p>Age should be more than 18</p>}
-                {errors.age?.type === 'max' && <p>Age should not be more than 80</p>}
+                {errors.age && <p className="text-danger">{errors.age.message}</p>}
             </div>
-            <button className="btn btn-primary">Submit</button>
+            <button disabled={!isValid} className="btn btn-primary">Submit</button>
         </form>
     );
 }
