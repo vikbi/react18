@@ -1,39 +1,20 @@
 import { useEffect, useState } from "react";
 import axios, { CanceledError } from 'axios';
 import userService, { User } from "../../services/user-service";
+import useUsers from "../../hooks/useUsers";
 
 
 
 const UserList = () => {
 
-    const [users, setUsers] = useState<User[]>([]);
-    const [error, setError] = useState('');
-    const [isLoading, setLoading] = useState(false);
-    useEffect(() => {
-        const controller = new AbortController();
-        setLoading(true);
-        const { request, cancel } = userService.getAllUsers();
-
-        request
-            .then((res) => {
-                setUsers(res.data);
-                setLoading(false)
-            })
-            .catch((err) => {
-                if (err instanceof CanceledError) return;
-                setError(err.message);
-                setLoading(false);
-            });
-
-        return () => cancel();
-    }, []);
+    const { users, error, isLoading, setUsers, setError } = useUsers();
 
     const deleteUser = (user: User) => {
         const originalUsers = [...users];
 
         setUsers(users.filter(u => u.id !== user.id));
 
-        userService.deleteUser(user.id).catch(err => {
+        userService.delete(user.id).catch(err => {
             setError(err.message);
             setUsers(originalUsers);
         })
@@ -44,7 +25,7 @@ const UserList = () => {
         const originalUsers = [...users];
         setUsers(users.map(u => u.id === user.id ? updatedUser : u));
 
-        userService.updateUser(updatedUser).catch(err => {
+        userService.update(updatedUser).catch(err => {
             setError(err.message);
             setUsers(originalUsers);
         })
@@ -52,7 +33,7 @@ const UserList = () => {
 
     const addUser = () => {
         const newUser = { id: 11, name: 'vivek' };
-        userService.createUser(newUser).then(res => {
+        userService.create(newUser).then(res => {
             setUsers([newUser, ...users]);
         }).catch(err => {
             setError(err.message)
