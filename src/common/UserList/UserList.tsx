@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
 import axios, { CanceledError } from 'axios';
+import userService, { User } from "../../services/user-service";
 
-interface User {
-    id: number,
-    name: string
-}
+
 
 const UserList = () => {
 
@@ -14,15 +12,20 @@ const UserList = () => {
     useEffect(() => {
         const controller = new AbortController();
         setLoading(true);
-        axios.get<User[]>("https://jsonplaceholder.typicode.com/users", { signal: controller.signal })
-            .then((res) => { setUsers(res.data); setLoading(false) })
+        const { request, cancel } = userService.getAllUsers();
+
+        request
+            .then((res) => {
+                setUsers(res.data);
+                setLoading(false)
+            })
             .catch((err) => {
                 if (err instanceof CanceledError) return;
                 setError(err.message);
                 setLoading(false);
             });
 
-        return () => controller.abort();
+        return () => cancel();
     }, []);
 
     const deleteUser = (user: User) => {
@@ -30,11 +33,10 @@ const UserList = () => {
 
         setUsers(users.filter(u => u.id !== user.id));
 
-        axios.delete("https://jsonplaceholder.typicode.com/users/" + user.id)
-            .catch(err => {
-                setError(err.message);
-                setUsers(originalUsers);
-            })
+        userService.deleteUser(user.id).catch(err => {
+            setError(err.message);
+            setUsers(originalUsers);
+        })
     }
 
     const updateUser = (user: User) => {
@@ -42,18 +44,24 @@ const UserList = () => {
         const originalUsers = [...users];
         setUsers(users.map(u => u.id === user.id ? updatedUser : u));
 
-        axios.patch("https://jsonplaceholder.typicode.com/users/" + user.id, updatedUser)
-            .then(res => {
+        userService.updateUser(updatedUser).catch(err => {
+            setError(err.message);
+            setUsers(originalUsers);
+        })
+    }
 
-            })
-            .catch(err => {
-                setError(err.message);
-                setUsers(originalUsers);
-            })
+    const addUser = () => {
+        const newUser = { id: 11, name: 'vivek' };
+        userService.createUser(newUser).then(res => {
+            setUsers([newUser, ...users]);
+        }).catch(err => {
+            setError(err.message)
+        });
     }
     return <div>
         {isLoading && <div className="spinner-border"></div>}
         {error && <p className="text-danger">{error}</p>}
+        <button onClick={() => addUser()} className="btn primary">Add</button>
         <ul className="list-group">
             {users.map((user) => <li className="list-group-item d-flex justify-content-between" key={user.id}>
                 {user.name}
